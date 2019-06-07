@@ -1,13 +1,16 @@
 import akka.actor.Scheduler
 import com.jasonmar.ignite.sql._
 import com.jasonmar.ignite.util.AutoClose
+import javax.cache.Cache
 import org.apache.ignite.client.{ClientCache, IgniteClient}
 import org.apache.ignite.configuration.ClientConfiguration
 import org.apache.ignite.{Ignite, Ignition}
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.async.Async.async
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe
 import scala.util.Try
 
@@ -48,6 +51,12 @@ trait IgniteClientMemCache[KT] {
       sqlFieldsClientQuery(cache, query, iter => {
         iter.map(_.toArray).toList.flatten.map(valueFactory[R](_))
       }, args.map(toJavaValueNull): _*).getOrElse(List())
+    }
+  }
+
+  def query[V](query: String, args: Any*)(implicit tag: ClassTag[V]): Option[Array[Cache.Entry[KT, V]]] = {
+    runClient[V, Array[Cache.Entry[KT, V]]] { cache =>
+      sqlQueryClient(cache, query, args.map(toJavaValueNull): _*).getOrElse(Array())
     }
   }
 

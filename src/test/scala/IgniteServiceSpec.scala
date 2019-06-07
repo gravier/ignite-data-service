@@ -22,8 +22,8 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
 //      HttpResponse(status = BadRequest, entity = marshal("Bad ip format"))
 //  }
 
-  it should "return results when looking for real estate" in {
-    Post(s"/realtor", FindByLocation("")) ~> routes ~> check {
+  it should "return results when looking by state" in {
+    Post(s"/property", FindByLocation(state = Some("rio"))) ~> routes ~> check {
       status shouldBe OK
       contentType shouldBe `application/json`
     }

@@ -13,11 +13,6 @@ import io.circe.generic.auto._
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-case class FindByLocation(query: String,
-                          state: Option[String] = None,
-                          lat: Option[Double] = None,
-                          lon: Option[Double] = None)
-
 trait DataService extends BaseCirceSupport with FailFastUnmarshaller {
   implicit val system: ActorSystem
   implicit def executor: ExecutionContextExecutor
@@ -34,7 +29,7 @@ trait DataService extends BaseCirceSupport with FailFastUnmarshaller {
 
   val routes = {
     logRequestResult("ignite-data-service") {
-      pathPrefix("realtor") {
+      pathPrefix("property") {
         (post & entity(as[FindByLocation])) { req =>
           complete {
             BadRequest -> "now working"
