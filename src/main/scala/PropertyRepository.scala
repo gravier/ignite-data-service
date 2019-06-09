@@ -1,10 +1,10 @@
 import scala.async.Async.{async, await}
 import io.getquill._
 import org.slf4j.LoggerFactory
-
+import QuillUtils._
 import scala.concurrent.{ExecutionContext, Future}
 
-class PropertyRepository(implicit igniteClientMemCache: IgniteClientMemCache[String],
+class PropertyRepository(implicit cache: PropertyIgniteCache,
                          sqlCtx: SqlMirrorContext[MirrorSqlDialect, Literal],
                          ec: ExecutionContext) {
 
@@ -19,13 +19,12 @@ class PropertyRepository(implicit igniteClientMemCache: IgniteClientMemCache[Str
           .filter(p => lift(req).state.forall(_ == p.state))
           .take(100) //todo replace with paging
       }
-      val sql = sqlCtx.run(q).string
+      val sql = sqlCtx.run(q).string.fieldsToStar()
       val args = List(
         req.state,
         req.state.map(_.toLowerCase)
       )
-      igniteClientMemCache.query[Property](sql, args: _*).map(_.map(_.getValue).toList).getOrElse(List())
-
+      await { cache.query[Property](sql, args: _*).map(_.map(_.getValue).toList) }
     }
   }
 }

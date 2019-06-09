@@ -6,17 +6,22 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.{Flow, Sink, Source}
+import com.jasonmar.ignite.config.IgniteClientConfig
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import de.heikoseeberger.akkahttpcirce.{BaseCirceSupport, FailFastUnmarshaller}
 import io.circe.generic.auto._
+import io.getquill.{Literal, MirrorSqlDialect, SqlMirrorContext}
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
-trait DataService extends BaseCirceSupport with FailFastUnmarshaller {
+trait PropertyService extends BaseCirceSupport with FailFastUnmarshaller {
   implicit val system: ActorSystem
   implicit def executor: ExecutionContextExecutor
   implicit val materializer: Materializer
+
+  implicit val propertyRepository: PropertyRepository
 
   def config: Config
   val logger: LoggingAdapter
@@ -32,7 +37,7 @@ trait DataService extends BaseCirceSupport with FailFastUnmarshaller {
       pathPrefix("property") {
         (post & entity(as[FindByLocation])) { req =>
           complete {
-            BadRequest -> "now working"
+            propertyRepository.findByLocation(req)
           }
         }
       }
@@ -40,13 +45,23 @@ trait DataService extends BaseCirceSupport with FailFastUnmarshaller {
   }
 }
 
-object DataServiceApp extends App with DataService {
+object PropertyServiceApp extends App with PropertyService {
   override implicit val system       = ActorSystem()
   override implicit val executor     = system.dispatcher
   override implicit val materializer = ActorMaterializer()
 
+  implicit val scheduler = system.scheduler
+
   override val config = ConfigFactory.load()
   override val logger = Logging(system, getClass)
+  implicit val igniteCfg: IgniteClientConfig =
+    IgniteClientConfig(
+      peerClassLoading = true
+    )
+
+  implicit val sqlCtx: SqlMirrorContext[MirrorSqlDialect, Literal] = new SqlMirrorContext(MirrorSqlDialect, Literal)
+  implicit val cache: PropertyIgniteCache                          = Await.result(PropertyIgniteCache(), 120.seconds) // init cache delay
+  override implicit val propertyRepository                         = new PropertyRepository()
 
   Http().bindAndHandle(routes, config.getString("http.interface"), config.getInt("http.port"))
 }

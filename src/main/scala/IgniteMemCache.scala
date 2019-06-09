@@ -21,9 +21,13 @@ import com.jasonmar.ignite.config.IgniteClientConfig
 /**
   * Created by evaldas on 18/04/18.
   */
-class IgniteMemCache[KT](implicit val ex: ExecutionContext, val s: Scheduler, val ignite: Ignite) {
+trait IgniteMemCache[KT] {
+  val cacheName: String
+  implicit val ex: ExecutionContext
+  implicit val s: Scheduler
+  implicit val ignite: Ignite
 
-  lazy val logger: Logger = LoggerFactory.getLogger(classOf[IgniteMemCache[KT]])
+  val logger: Logger
 
   def query[T: TypeTag](sql: String, args: Any*)(implicit tag: ClassTag[T]): Future[Array[Cache.Entry[KT, T]]] = {
     val cache = mkCache[KT, T]()
@@ -92,24 +96,8 @@ class IgniteMemCache[KT](implicit val ex: ExecutionContext, val s: Scheduler, va
     * @return Cache to use.
     */
   def mkCache[K, V: TypeTag](): IgniteCache[K, V] =
-    ignite.cache[K, V](IgniteMemCache.cacheName)
+    ignite.cache[K, V](cacheName)
 
-}
-
-object IgniteMemCache {
-  final val cacheName = "propertyCache"
-
-  def cacheBuilder(): CacheBuilder[String, Property] = {
-    CacheBuilder.builderOf(IgniteMemCache.cacheName, classOf[String], classOf[Property])
-  }
-
-  def apply[KT]()(implicit ex: ExecutionContext, s: Scheduler, cfg: IgniteClientConfig): Future[IgniteMemCache[KT]] = {
-    async {
-      val cacheBuilders           = Some(Seq(cacheBuilder()))
-      implicit val ignite: Ignite = init(Some(Seq(cfg)), cacheBuilders, None, activate = true)
-      new RecommendationIgniteCache()
-    }
-  }
 }
 
 object TimingUtils {
