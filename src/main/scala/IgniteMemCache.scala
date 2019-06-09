@@ -1,62 +1,49 @@
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.concurrent.duration._
+import scala.async.Async.{async, await}
+import akka.pattern.after
 import akka.actor.Scheduler
+import com.jasonmar.ignite.{CacheBuilder, init}
+import com.jasonmar.ignite.sql.sqlQuery
+import org.apache.ignite.{Ignite, IgniteCache}
 import com.jasonmar.ignite.sql._
-import com.jasonmar.ignite.util.AutoClose
 import javax.cache.Cache
-import org.apache.ignite.client.{ClientCache, IgniteClient}
-import org.apache.ignite.configuration.ClientConfiguration
-import org.apache.ignite.{Ignite, Ignition}
-import org.joda.time.DateTime
+import org.apache.ignite.cache.affinity.AffinityKey
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.async.Async.async
-import scala.concurrent.{Await, ExecutionContext, Future}
+import collection.JavaConverters._
+import scala.collection.JavaConverters._
+import reflect.runtime.universe._
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe
-import scala.util.Try
+import TimingUtils._
+import com.jasonmar.ignite.config.IgniteClientConfig
 
-trait IgniteClientMemCache[KT] {
-  private val log: Logger = LoggerFactory.getLogger(this.getClass.getName)
+/**
+  * Created by evaldas on 18/04/18.
+  */
+class IgniteMemCache[KT](implicit val ex: ExecutionContext, val s: Scheduler, val ignite: Ignite) {
 
-  implicit val cacheName: String
-  def server: String
-  implicit def ex: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+  lazy val logger: Logger = LoggerFactory.getLogger(classOf[IgniteMemCache[KT]])
 
-  def loadSeq[V](values: Traversable[V], getKey: V => KT): Option[Unit] = {
-    runClient[V, Unit] { cache =>
-      log.info(s"pushing seq to cache: ${values.size}")
-      values.foreach(v => cache.put(getKey(v), v))
-    }
-  }
-
-  def loadIter[V, A](values: Iterable[A], transformer: A => V, getKey: V => KT): Option[Unit] = {
-    runClient[V, Unit] { cache =>
-      log.info(s"${DateTime.now} pushing seq to cache: ${values.size}")
-      for (row <- values) {
-        val v = transformer(row)
-        cache.put(getKey(v), v)
-        //        println(s"transform loaded $row")
+  def query[T: TypeTag](sql: String, args: Any*)(implicit tag: ClassTag[T]): Future[Array[Cache.Entry[KT, T]]] = {
+    val cache = mkCache[KT, T]()
+    async {
+      implicit val log = logger
+      timed(s"ignite cache fetch for ${cache.getName}.") {
+        sqlQuery(cache, sql, args.map(toJavaValueNull): _*).getOrElse(Array())
       }
-      log.info(s"${DateTime.now} push finished")
     }
   }
 
-  def getByKey[V](key: KT): Option[V] = {
-    runClient[V, V] { cache =>
-      cache.get(key)
-    }
-  }
-
-  def queryFields[V, R](query: String, args: Any*): Option[List[Option[R]]] = {
-    runClient[V, List[Option[R]]] { cache =>
-      sqlFieldsClientQuery(cache, query, iter => {
-        iter.map(_.toArray).toList.flatten.map(valueFactory[R](_))
-      }, args.map(toJavaValueNull): _*).getOrElse(List())
-    }
-  }
-
-  def query[V](query: String, args: Any*)(implicit tag: ClassTag[V]): Option[Array[Cache.Entry[KT, V]]] = {
-    runClient[V, Array[Cache.Entry[KT, V]]] { cache =>
-      sqlQueryClient(cache, query, args.map(toJavaValueNull): _*).getOrElse(Array())
+  def queryFields[T: TypeTag, V](sql: String, args: Any*): Future[List[Option[V]]] = {
+    val cache = mkCache[KT, T]()
+    async {
+      implicit val log = logger
+      timed(s"ignite cache agg for ${cache.getName}.") {
+        sqlFieldsQuery(cache, sql, iter => {
+          iter.map(_.toArray).toList.flatten.map(valueFactory[V](_))
+        }, args.map(toJavaValueNull): _*).getOrElse(List())
+      }
     }
   }
 
@@ -77,40 +64,61 @@ trait IgniteClientMemCache[KT] {
     }
   }
 
-  private[this] def clientConnectHandler(adr: String, retry: Int = 0): Option[IgniteClient] = {
-    import scala.concurrent.duration._
-    val res = Try(Await.result(Future {
-      Ignition.startClient(new ClientConfiguration().setTimeout(1000).setAddresses(s"$adr:10800"))
-    }, 20.seconds))
-    val client = res match {
-      case scala.util.Success(client) => {
-        log.info(s"connected to: $adr")
-        Some(client)
-      }
-      case scala.util.Failure(exp) => {
-        log.error(s"client could not connect ${exp} retry: $retry")
-        None
+  def get[T: TypeTag](key: KT): Future[Option[T]] = {
+    val cache = mkCache[KT, T]()
+    async {
+      implicit val log = logger
+      timed(s"ignite cache get for ${cache.getName}.") {
+        Option(cache.get(key))
       }
     }
-    if (client.isEmpty && retry < 10) {
-      Thread.sleep(1000L * (retry + 1))
-      clientConnectHandler(adr, retry + 1)
-    } else
-      client
   }
 
-  private[this] def runClient[V, R](cacheFunc: ClientCache[KT, V] => R): Option[R] = {
-    val igniteClient = clientConnectHandler(server)
-
-    if (igniteClient.isEmpty)
-      throw new Exception("could not connect to Ignite giving up")
-
-    AutoClose
-      .autoClose(igniteClient.get) { ign =>
-        val cache = ign.cache[KT, V](cacheName)
-        cacheFunc(cache)
+  def getAll[T: TypeTag](keys: Set[KT]): Future[Map[KT, T]] = {
+    val cache = mkCache[KT, T]()
+    async {
+      implicit val log = logger
+      timed(s"ignite cache getAll for ${cache.getName}.") {
+        cache.getAll(keys.asJava).asScala.toMap
       }
-      .toOption
+    }
   }
 
+  def cleanup(): Future[Unit] = ???
+
+  /**
+    * Gets instance of typed cache view to use.
+    *
+    * @return Cache to use.
+    */
+  def mkCache[K, V: TypeTag](): IgniteCache[K, V] =
+    ignite.cache[K, V](IgniteMemCache.cacheName)
+
+}
+
+object IgniteMemCache {
+  final val cacheName = "propertyCache"
+
+  def cacheBuilder(): CacheBuilder[String, Property] = {
+    CacheBuilder.builderOf(IgniteMemCache.cacheName, classOf[String], classOf[Property])
+  }
+
+  def apply[KT]()(implicit ex: ExecutionContext, s: Scheduler, cfg: IgniteClientConfig): Future[IgniteMemCache[KT]] = {
+    async {
+      val cacheBuilders           = Some(Seq(cacheBuilder()))
+      implicit val ignite: Ignite = init(Some(Seq(cfg)), cacheBuilders, None, activate = true)
+      new RecommendationIgniteCache()
+    }
+  }
+}
+
+object TimingUtils {
+
+  def timed[R](name: String)(block: => R)(implicit logger: Logger): R = {
+    val t0     = System.nanoTime()
+    val result = block // call-by-name
+    val t1     = System.nanoTime()
+    logger.debug(s"$name elapsed time: " + (t1 - t0) / 1000000.0 + "ms")
+    result
+  }
 }
