@@ -16,6 +16,7 @@ Goal of the workshop
 * optimizing ignite queries
 
 The service loads data from public dataset of Brazilian Property transactions and loads to a Ignite cache that provides in SQL memory access of loaded data.
+Public data set is available [here](https://console.cloud.google.com/marketplace/details/properati/property-data-br)
 
 ## Author & license
 
