@@ -15,15 +15,15 @@ class PropertyIgniteCache(val cacheName: String)(implicit val ex: ExecutionConte
 }
 
 object PropertyIgniteCache {
-  final val cacheName = "propertyCache"
-
-  def cacheBuilder(): CacheBuilder[String, Property] = {
+  def cacheBuilder(cacheName: String): CacheBuilder[String, Property] = {
     CacheBuilder.builderOf(cacheName, classOf[String], classOf[Property])
   }
 
-  def apply[KT]()(implicit ex: ExecutionContext, s: Scheduler, cfg: IgniteClientConfig): Future[PropertyIgniteCache] = {
+  def apply[KT](cacheName: String = "propertyCache")(implicit ex: ExecutionContext,
+                                                     s: Scheduler,
+                                                     cfg: IgniteClientConfig): Future[PropertyIgniteCache] = {
     async {
-      val cacheBuilders           = Some(Seq(cacheBuilder()))
+      val cacheBuilders           = Some(Seq(cacheBuilder(cacheName)))
       implicit val ignite: Ignite = init(Some(Seq(cfg)), cacheBuilders, None, activate = true)
       new PropertyIgniteCache(cacheName)
     }

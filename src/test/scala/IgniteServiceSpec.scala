@@ -51,7 +51,7 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
 
   implicit val igniteCfg: IgniteClientConfig = IgniteClientConfig(peerClassLoading = true)
   implicit val cache: PropertyIgniteCache =
-    ScalaFutures.whenReady(PropertyIgniteCache(), Timeout(15.seconds)) { ch =>
+    ScalaFutures.whenReady(PropertyIgniteCache("testPropertyCache"), Timeout(15.seconds)) { ch =>
       Await.result(Future {
         ch.mkCache[String, Property]().clear()
       }, 15.seconds) // not to conflict between tests
