@@ -12,6 +12,7 @@ val logbackV       = "1.2.3"
 val nsScalaTimeV   = "2.20.0"
 val quillV         = "2.6.0"
 val scalaAsyncV    = "0.9.7"
+val kantanCsvV     = "0.5.1"
 
 lazy val recService = (project in file("."))
   .dependsOn(RootProject(uri("git://github.com/stacktome/ignite-scala.git")))
@@ -36,7 +37,10 @@ lazy val recService = (project in file("."))
       "ch.qos.logback"         % "logback-classic"       % logbackV,
       "com.github.nscala-time" %% "nscala-time"          % nsScalaTimeV,
       "io.getquill"            %% "quill-sql"            % quillV,
-      "org.scala-lang.modules" %% "scala-async"          % scalaAsyncV
+      "org.scala-lang.modules" %% "scala-async"          % scalaAsyncV,
+      "com.nrinaudo"           %% "kantan.csv"           % kantanCsvV,
+      "com.nrinaudo"           %% "kantan.csv-joda-time" % kantanCsvV,
+      "com.nrinaudo"           %% "kantan.csv-generic"   % kantanCsvV
     ),
     // add 'config' directory first in the classpath of the start script,
     // an alternative is to set the config file locations via CLI parameters

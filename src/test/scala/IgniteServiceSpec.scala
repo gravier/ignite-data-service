@@ -1,3 +1,5 @@
+import java.net.URL
+
 import akka.actor.Scheduler
 import akka.event.NoLogging
 import akka.http.scaladsl.model.ContentTypes._
@@ -17,6 +19,7 @@ import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.io.Source
 
 class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest with PropertyService {
   override def testConfigSource     = "akka.loglevel = WARNING"
@@ -29,14 +32,15 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
   val properties = List[Property](
     Property("1",
              minDate,
-             3000000,
-             "brl",
+             "flat",
              "rio",
              "rio",
              56.2135,
              46.222,
-             773724,
              3000000,
+             "brl",
+             3000000,
+             773724,
              200,
              250,
              3868.625,
@@ -68,29 +72,38 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
   implicit val sqlCtx: SqlMirrorContext[MirrorSqlDialect, Literal] = new SqlMirrorContext(MirrorSqlDialect, Literal)
   implicit val propertyRepository                                  = new PropertyRepository()
 
-  it should "return all results" in {
-    Post(s"/property", FindByLocation()) ~> routes ~> check {
-      status shouldBe OK
-      contentType shouldBe `application/json`
-      val resp = responseAs[List[Property]]
-      resp shouldBe properties
-    }
-  }
+//  it should "return all results" in {
+//    Post(s"/property", FindByLocation()) ~> routes ~> check {
+//      status shouldBe OK
+//      contentType shouldBe `application/json`
+//      val resp = responseAs[List[Property]]
+//      resp shouldBe properties
+//    }
+//  }
+//
+//  it should "filter by state" in {
+//    Post(s"/property", FindByLocation(state = Some("rio"))) ~> routes ~> check {
+//      status shouldBe OK
+//      contentType shouldBe `application/json`
+//      val resp = responseAs[List[Property]]
+//      resp shouldBe properties.filter(_.state == "rio")
+//    }
+//
+//    Post(s"/property", FindByLocation(state = Some("rio1"))) ~> routes ~> check {
+//      status shouldBe OK
+//      contentType shouldBe `application/json`
+//      val resp = responseAs[List[Property]]
+//      resp shouldBe List()
+//    }
+//  }
 
-  it should "filter by state" in {
-    Post(s"/property", FindByLocation(state = Some("rio"))) ~> routes ~> check {
-      status shouldBe OK
-      contentType shouldBe `application/json`
-      val resp = responseAs[List[Property]]
-      resp shouldBe properties.filter(_.state == "rio")
-    }
+  it should "be possible to load data" in {
+    import kantan.csv._
+    import kantan.csv.ops._
+    import kantan.csv.generic._
 
-    Post(s"/property", FindByLocation(state = Some("rio1"))) ~> routes ~> check {
-      status shouldBe OK
-      contentType shouldBe `application/json`
-      val resp = responseAs[List[Property]]
-      resp shouldBe List()
-    }
+    val url      = new URL("https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
+    val iterator = url.asCsvReader[Property](rfc.withHeader)
   }
 
 }
