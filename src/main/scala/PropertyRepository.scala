@@ -19,12 +19,15 @@ class PropertyRepository(implicit cache: PropertyIgniteCache,
           .filter(p => lift(req).state.forall(_ == p.state))
           .take(100) //todo replace with paging
       }
-      val sql = sqlCtx.run(q).string.fieldsToStar()
       val args = List(
-        req.state,
+        req.state.map(_.toLowerCase),
         req.state.map(_.toLowerCase)
       )
-      await { cache.query[Property](sql, args: _*).map(_.map(_.getValue).toList) }
+      val sql       = sqlCtx.run(q).string.fieldsToStar().removeEmptyOrFilters(args)
+      val dedupArgs = removeDuplicateVals(args)
+      logger.debug(s"querying: $sql")
+      logger.debug(s"with args: $dedupArgs")
+      await { cache.query[Property](sql, dedupArgs: _*).map(_.map(_.getValue).toList) }
     }
   }
 }

@@ -12,9 +12,11 @@ import com.typesafe.config.ConfigFactory
 import de.heikoseeberger.akkahttpcirce.{BaseCirceSupport, FailFastUnmarshaller}
 import io.circe.generic.auto._
 import io.getquill.{Literal, MirrorSqlDialect, SqlMirrorContext}
+import PropertyIgniteCacheLoader._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.util.Failure
 
 trait PropertyService extends BaseCirceSupport with FailFastUnmarshaller {
   implicit val system: ActorSystem
@@ -60,8 +62,15 @@ object PropertyServiceApp extends App with PropertyService {
     )
 
   implicit val sqlCtx: SqlMirrorContext[MirrorSqlDialect, Literal] = new SqlMirrorContext(MirrorSqlDialect, Literal)
-  implicit val cache: PropertyIgniteCache                          = Await.result(PropertyIgniteCache(), 120.seconds) // init cache delay
-  override implicit val propertyRepository                         = new PropertyRepository()
+  implicit val cache: PropertyIgniteCache = Await.result(
+    PropertyIgniteCache().map { ignCache =>
+      loadPropertiesFromCsv(ignCache, "https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
+//        "file:////home/evaldas/Downloads/property-br-sample.csv")
+      ignCache
+    },
+    120.seconds
+  ) // init cache delay
+  override implicit val propertyRepository = new PropertyRepository()
 
   Http().bindAndHandle(routes, config.getString("http.interface"), config.getInt("http.port"))
 }

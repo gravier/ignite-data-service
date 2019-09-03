@@ -98,63 +98,9 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
   }
 
   it should "be possible to load data" in {
-    import kantan.csv._
-    import kantan.csv.ops._
-    import kantan.csv.generic._
-
-//    val url      = new URL("https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
-    val url = new URL("file:////home/evaldas/Downloads/property-br-sample.csv")
-
-    val iterator = url.asCsvReader[List[String]](rfc.withHeader)
-    val res = for { row <- iterator } yield
-      row.getOrElse(List()) match {
-        case (id ::
-              createdOn ::
-              propertyType ::
-              place ::
-              state ::
-              lat ::
-              lon ::
-              price ::
-              currency ::
-              priceUsd ::
-              surficeTotalSqm ::
-              surficeCoveredSqm ::
-              priceUsdPerSqm ::
-              pricePerSqm ::
-              floor ::
-              rooms ::
-              expenses ::
-              url ::
-              title ::
-              imageUrl :: _) =>
-          Some(
-            Property(
-              id,
-              Try(org.joda.time.LocalDate.parse(createdOn).toDate.toInstant.toEpochMilli).getOrElse(0),
-              propertyType,
-              place,
-              state,
-              Try(lat.toDouble).getOrElse(0.0),
-              Try(lon.toDouble).getOrElse(0.0),
-              Try(price.toDouble).getOrElse(0.0),
-              currency,
-              Try(priceUsd.toDouble).getOrElse(0.0),
-              Try(surficeTotalSqm.toInt).getOrElse(0),
-              Try(surficeCoveredSqm.toInt).getOrElse(0),
-              Try(priceUsdPerSqm.toDouble).getOrElse(0.0),
-              Try(pricePerSqm.toDouble).getOrElse(0.0),
-              Try(floor.toInt).getOrElse(0),
-              Try(rooms.toInt).getOrElse(0),
-              Try(expenses.toInt).getOrElse(0),
-              url,
-              title,
-              imageUrl
-            ))
-        case _ =>
-          None
-
-      }
+    PropertyIgniteCacheLoader.loadPropertiesFromCsv(cache, "file:////home/evaldas/Downloads/property-br-sample.csv")
+//      "https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
+    Await.result(cache.get("6d2dffdf24a61af94f23e69f8c3ebef1b9ce58ea"), 1.seconds).isDefined shouldBe true
   }
 
 }
