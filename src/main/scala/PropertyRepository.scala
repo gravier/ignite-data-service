@@ -17,11 +17,14 @@ class PropertyRepository(implicit cache: PropertyIgniteCache,
       val q = quote {
         query[Property]
           .filter(p => lift(req).state.forall(_ == p.state))
+          .filter(p => lift(req).propertyType.forall(_ == p.propertyType))
           .take(100) //todo replace with paging
       }
       val args = List(
         req.state.map(_.toLowerCase),
-        req.state.map(_.toLowerCase)
+        req.state.map(_.toLowerCase),
+        req.propertyType.map(_.toLowerCase),
+        req.propertyType.map(_.toLowerCase)
       )
       val sql       = sqlCtx.run(q).string.fieldsToStar().removeEmptyOrFilters(args)
       val dedupArgs = removeDuplicateVals(args)

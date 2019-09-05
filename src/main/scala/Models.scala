@@ -24,7 +24,7 @@ case class Property(@(QuerySqlField @field)(index = true) id: String,
                     @(QuerySqlField @field)(index = true) floor: Int,
                     @(QuerySqlField @field)(index = true) rooms: Int,
                     @(QuerySqlField @field)(index = true) expenses: Int,
-                    @(QuerySqlField @field)(index = true) url: String,
+                    url: String,
 //    description: String,
                     @(QuerySqlField @field)(index = true) title: String,
-                    @(QuerySqlField @field)(index = true) imageUrl: String)
+                    imageUrl: String)
