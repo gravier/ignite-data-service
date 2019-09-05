@@ -63,13 +63,14 @@ object PropertyServiceApp extends App with PropertyService {
 
   implicit val sqlCtx: SqlMirrorContext[MirrorSqlDialect, Literal] = new SqlMirrorContext(MirrorSqlDialect, Literal)
   implicit val cache: PropertyIgniteCache = Await.result(
-    PropertyIgniteCache().map { ignCache =>
-      loadPropertiesFromCsv(ignCache, "https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
-//        "file:////home/evaldas/Downloads/property-br-sample.csv")
-      ignCache
-    },
-    120.seconds
-  ) // init cache delay
+    PropertyIgniteCache(),
+    10.seconds
+  )
+
+  loadPropertiesFromCsv(cache,
+                        //"https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
+                        "file:////home/evaldas/Downloads/property-br-sample.csv")
+//    "file:////home/evaldas/Downloads/property-br.csv")
   override implicit val propertyRepository = new PropertyRepository()
 
   Http().bindAndHandle(routes, config.getString("http.interface"), config.getInt("http.port"))
