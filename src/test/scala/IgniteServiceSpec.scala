@@ -50,6 +50,26 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
              40000,
              "",
              "favela",
+             ""),
+    Property("2",
+             minDate + 1,
+             "house",
+             "puerta",
+             "puerta",
+             56.2135,
+             46.222,
+             300002200,
+             "brl",
+             77372004,
+             2000,
+             500,
+             3868.625,
+             15000,
+             9,
+             10,
+             900000,
+             "",
+             "mansion",
              "")
   )
 
@@ -97,8 +117,19 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
     }
   }
 
+  it should "sort by direction" in {
+    Post(s"/property", FindByLocation(sorting = Some(List(SortingRequest("field", SortDirection.Desc))))) ~> routes ~> check {
+      status shouldBe OK
+      contentType shouldBe `application/json`
+      val resp = responseAs[List[Property]]
+      resp.head.createdOn shouldBe properties.map(_.createdOn).max
+    }
+  }
+
   it should "be possible to load data" in {
-    PropertyIgniteCacheLoader.loadPropertiesFromCsv(cache, "file:////home/evaldas/Downloads/property-br-sample.csv")
+    Await.result(
+      PropertyIgniteCacheLoader.loadPropertiesFromCsv(cache, "file:////home/evaldas/Downloads/property-br-sample.csv"),
+      10.seconds)
 //      "https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
     Await.result(cache.get("6d2dffdf24a61af94f23e69f8c3ebef1b9ce58ea"), 1.seconds).isDefined shouldBe true
   }

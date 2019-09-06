@@ -17,6 +17,7 @@ import PropertyIgniteCacheLoader._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.Failure
+import SortDirection._
 
 trait PropertyService extends BaseCirceSupport with FailFastUnmarshaller {
   implicit val system: ActorSystem
