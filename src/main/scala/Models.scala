@@ -8,16 +8,21 @@ case class FindByLocation(query: Option[String] = None,
                           propertyType: Option[String] = None,
                           lat: Option[Double] = None,
                           lon: Option[Double] = None,
-                          sorting: Option[List[SortingRequest]] = None)
+                          sorting: Option[List[Sorting]] = None)
 
-case class SortingRequest(field: String, direction: SortDirection)
+case class Sorting(field: SortField, direction: SortDirection)
 
 sealed trait SortDirection extends EnumEntry
 object SortDirection extends Enum[SortDirection] with Lowercase with CirceEnum[SortDirection] {
   case object Asc  extends SortDirection
   case object Desc extends SortDirection
-  val values                                = findValues
-  override def withNameOption(name: String) = withNameInsensitiveOption(name)
+  val values = findValues
+}
+
+sealed trait SortField extends EnumEntry
+object SortField extends Enum[SortField] with Lowercase with CirceEnum[SortField] {
+  case object CreatedOn extends SortField
+  val values = findValues
 }
 
 case class Property(@(QuerySqlField @field)(index = true) id: String,

@@ -19,7 +19,10 @@ class PropertyRepository(implicit cache: PropertyIgniteCache,
           .filter(p => lift(req).state.forall(_ == p.state))
           .filter(p => lift(req).propertyType.forall(_ == p.propertyType))
           .take(100) //todo replace with paging
+          .sortBy(_.createdOn)(Ord.desc)
       }
+
+      //todo add all sort permut.
       val args = List(
         req.state.map(_.toLowerCase),
         req.state.map(_.toLowerCase),
