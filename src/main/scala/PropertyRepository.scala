@@ -17,6 +17,7 @@ class PropertyRepository(implicit cache: PropertyIgniteCache,
       val q = quote {
         query[Property]
           .filter(p => lift(req).state.forall(_ == p.state))
+          .filter(p => lift(req).place.forall(_ == p.place))
           .filter(p => lift(req).propertyType.forall(_ == p.propertyType))
           .take(100) //todo replace with paging
       }
@@ -30,6 +31,8 @@ class PropertyRepository(implicit cache: PropertyIgniteCache,
       val args = List(
         req.state.map(_.toLowerCase),
         req.state.map(_.toLowerCase),
+        req.place.map(_.toLowerCase),
+        req.place.map(_.toLowerCase),
         req.propertyType.map(_.toLowerCase),
         req.propertyType.map(_.toLowerCase)
       )
