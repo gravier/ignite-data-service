@@ -19,17 +19,21 @@ class PropertyRepository(implicit cache: PropertyIgniteCache,
           .filter(p => lift(req).state.forall(_ == p.state))
           .filter(p => lift(req).propertyType.forall(_ == p.propertyType))
           .take(100) //todo replace with paging
-          .sortBy(_.createdOn)(Ord.desc)
       }
 
-      //todo add all sort permut.
+      val qSorted = req.sorting match {
+        case Some(Sorting(SortField.createdOn, SortDirection.asc) :: _)  => quote { q.sortBy(_.createdOn)(Ord.asc) }
+        case Some(Sorting(SortField.createdOn, SortDirection.desc) :: _) => quote { q.sortBy(_.createdOn)(Ord.desc) }
+        case _                                                           => q
+      }
+
       val args = List(
         req.state.map(_.toLowerCase),
         req.state.map(_.toLowerCase),
         req.propertyType.map(_.toLowerCase),
         req.propertyType.map(_.toLowerCase)
       )
-      val sql       = sqlCtx.run(q).string.fieldsToStar().removeEmptyOrFilters(args)
+      val sql       = sqlCtx.run(qSorted).string.fieldsToStar().removeEmptyOrFilters(args)
       val dedupArgs = removeDuplicateVals(args)
       logger.debug(s"querying: $sql")
       logger.debug(s"with args: $dedupArgs")

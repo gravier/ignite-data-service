@@ -13,15 +13,15 @@ case class FindByLocation(query: Option[String] = None,
 case class Sorting(field: SortField, direction: SortDirection)
 
 sealed trait SortDirection extends EnumEntry
-object SortDirection extends Enum[SortDirection] with Lowercase with CirceEnum[SortDirection] {
-  case object Asc  extends SortDirection
-  case object Desc extends SortDirection
+object SortDirection extends Enum[SortDirection] with CirceEnum[SortDirection] with Lowercase {
+  case object asc  extends SortDirection
+  case object desc extends SortDirection
   val values = findValues
 }
 
 sealed trait SortField extends EnumEntry
-object SortField extends Enum[SortField] with Lowercase with CirceEnum[SortField] {
-  case object CreatedOn extends SortField
+object SortField extends Enum[SortField] with CirceEnum[SortField] with Lowercase {
+  case object createdOn extends SortField
   val values = findValues
 }
 

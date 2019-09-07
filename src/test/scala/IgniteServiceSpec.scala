@@ -118,7 +118,7 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
   }
 
   it should "sort by direction" in {
-    Post(s"/property", FindByLocation(sorting = Some(List(SortingRequest("field", SortDirection.Desc))))) ~> routes ~> check {
+    Post(s"/property", FindByLocation(sorting = Some(List(Sorting(SortField.createdOn, SortDirection.desc))))) ~> routes ~> check {
       status shouldBe OK
       contentType shouldBe `application/json`
       val resp = responseAs[List[Property]]
