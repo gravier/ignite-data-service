@@ -9,15 +9,18 @@ import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.jasonmar.ignite.config.IgniteClientConfig
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import de.heikoseeberger.akkahttpcirce.{BaseCirceSupport, FailFastUnmarshaller}
 import io.circe.generic.auto._
 import io.getquill.{Literal, MirrorSqlDialect, SqlMirrorContext}
 import PropertyIgniteCacheLoader._
-
+import akka.http.scaladsl.model.headers._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.Failure
 import SortDirection._
+import akka.http.scaladsl.server.Route
+import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 
 trait PropertyService extends BaseCirceSupport with FailFastUnmarshaller {
   implicit val system: ActorSystem
@@ -68,11 +71,17 @@ object PropertyServiceApp extends App with PropertyService {
     10.seconds
   )
 
-  loadPropertiesFromCsv(cache,
-                        //"https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
-                        "file:////home/evaldas/Downloads/property-br-sample.csv")
+  loadPropertiesFromCsv(cache, "https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
+//                        "file:////home/evaldas/Downloads/property-br-sample.csv")
 //    "file:////home/evaldas/Downloads/property-br.csv"  )
   override implicit val propertyRepository = new PropertyRepository()
-
-  Http().bindAndHandle(routes, config.getString("http.interface"), config.getInt("http.port"))
+  Http().bindAndHandle(
+    Route.seal {
+      cors() {
+        routes
+      }
+    },
+    config.getString("http.interface"),
+    config.getInt("http.port")
+  )
 }

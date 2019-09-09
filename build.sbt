@@ -13,8 +13,9 @@ val nsScalaTimeV      = "2.20.0"
 val quillV            = "2.6.0"
 val scalaAsyncV       = "0.9.7"
 val kantanCsvV        = "0.5.1"
-val enumeratumVersion = "1.5.13"
-val enumeratumCirceVersion = "1.5.18"
+val enumeratumV = "1.5.13"
+val enumeratumCirceV = "1.5.18"
+val akkaCorsV = "0.3.1"
 
 lazy val recService = (project in file("."))
   .dependsOn(RootProject(uri("git://github.com/stacktome/ignite-scala.git")))
@@ -43,9 +44,10 @@ lazy val recService = (project in file("."))
       "com.nrinaudo"           %% "kantan.csv"           % kantanCsvV,
       "com.nrinaudo"           %% "kantan.csv-joda-time" % kantanCsvV,
       "com.nrinaudo"           %% "kantan.csv-generic"   % kantanCsvV,
-      "com.beachape"           %% "enumeratum"           % enumeratumVersion,
-      "com.beachape"           %% "enumeratum-circe"     % enumeratumCirceVersion
-    ),
+      "com.beachape"           %% "enumeratum"           % enumeratumV,
+      "com.beachape"           %% "enumeratum-circe"     % enumeratumCirceV,
+      "ch.megard" %% "akka-http-cors" % akkaCorsV,
+),
     // add 'config' directory first in the classpath of the start script,
     // an alternative is to set the config file locations via CLI parameters
     // when starting the application
