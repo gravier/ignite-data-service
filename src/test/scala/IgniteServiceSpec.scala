@@ -103,4 +103,9 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
     }
   }
 
+// TODO  - BONUS 1 - implement paging (why usually api's don't return count)
+// TODO - BONUS 2 - implement filter by room count
+// TODO - BONUS 3 - implement filter by price
+// TODO - BONUS 4 - implement filter by date
+
 }
