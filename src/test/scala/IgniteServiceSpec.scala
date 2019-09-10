@@ -91,5 +91,16 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
 //  implicit val cache: PropertyIgniteCache                          = null
   implicit val sqlCtx: SqlMirrorContext[MirrorSqlDialect, Literal] = new SqlMirrorContext(MirrorSqlDialect, Literal)
   implicit val propertyRepository                                  = new PropertyRepository()
+  //TODO - EXERCISE 1 - implement by propertyType and writing unit test by propertyType
+  //TODO - EXERCISE 2 - sorting by date
+
+  it should "return all results" in {
+    Post(s"/property", FindByLocation()) ~> routes ~> check {
+      status shouldBe OK
+      contentType shouldBe `application/json`
+      val resp = responseAs[List[Property]]
+      resp shouldBe properties
+    }
+  }
 
 }

@@ -27,6 +27,8 @@ object SortField extends Enum[SortField] with CirceEnum[SortField] with Lowercas
 }
 //@(QuerySqlField @field)(index = true)
 //(orderedGroups = Array(new Group(name = "geoIdx", order = 9, descending = true)))
+
+//TODO - EXERCISE 3 - adding date group indexes for performance
 case class Property(@(QuerySqlField @field)(index = true) id: String,
                     @(QuerySqlField @field) createdOn: Long,
                     @(QuerySqlField @field) propertyType: String,
