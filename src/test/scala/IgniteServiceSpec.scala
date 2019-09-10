@@ -103,6 +103,15 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
     }
   }
 
+  it should "be possible to load data" in {
+    Await.result(PropertyIgniteCacheLoader.loadPropertiesFromCsv(
+                   cache,
+                   "https://storage.googleapis.com/stacktome-temp/property-br-sample.csv"),
+                 10.seconds)
+    //      "https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
+    Await.result(cache.get("6d2dffdf24a61af94f23e69f8c3ebef1b9ce58ea"), 1.seconds).isDefined shouldBe true
+  }
+
 // TODO  - BONUS 1 - implement paging (why usually api's don't return count)
 // TODO - BONUS 2 - implement filter by room count
 // TODO - BONUS 3 - implement filter by price

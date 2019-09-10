@@ -15,7 +15,6 @@ object PropertyIgniteCacheLoader {
       logger.info(s"start loading cache from: $fullUrl")
       val url      = new URL(fullUrl)
       val iterator = url.asCsvReader[List[String]](rfc.withHeader)
-      val cache    = igniteCache.mkCache[String, Property]
       val res = for { row <- iterator } yield
         row.getOrElse(List()) match {
           case (id ::
@@ -65,7 +64,8 @@ object PropertyIgniteCacheLoader {
             logger.warn(s"could not parse $list")
             None
         }
-      res.foreach(maybeProp => maybeProp.map(p => cache.put(p.id, p)))
+
+      // TODO EXERCISE 0 - load to cache
       logger.info(s"cache load finished for: $fullUrl")
     }
   }
