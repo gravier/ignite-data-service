@@ -2,20 +2,20 @@ import sbt.Keys.scalaVersion
 
 enablePlugins(JavaAppPackaging)
 
-val akkaV             = "2.5.16"
-val akkaHttpV         = "10.1.4"
-val scalaTestV        = "3.0.5"
-val circeV            = "0.10.1"
-val akkaHttpCirceV    = "1.22.0"
-val igniteScala       = "1.7.2-SNAPSHOT"
-val logbackV          = "1.2.3"
-val nsScalaTimeV      = "2.20.0"
-val quillV            = "2.6.0"
-val scalaAsyncV       = "0.9.7"
-val kantanCsvV        = "0.5.1"
-val enumeratumV = "1.5.13"
+val akkaV            = "2.5.16"
+val akkaHttpV        = "10.1.4"
+val scalaTestV       = "3.0.5"
+val circeV           = "0.10.1"
+val akkaHttpCirceV   = "1.22.0"
+val igniteScala      = "1.7.2-SNAPSHOT"
+val logbackV         = "1.2.3"
+val nsScalaTimeV     = "2.20.0"
+val quillV           = "2.6.0"
+val scalaAsyncV      = "0.9.7"
+val kantanCsvV       = "0.5.1"
+val enumeratumV      = "1.5.13"
 val enumeratumCirceV = "1.5.18"
-val akkaCorsV = "0.3.1"
+val akkaCorsV        = "0.3.1"
 
 lazy val recService = (project in file("."))
   .dependsOn(RootProject(uri("git://github.com/stacktome/ignite-scala.git")))
@@ -46,8 +46,8 @@ lazy val recService = (project in file("."))
       "com.nrinaudo"           %% "kantan.csv-generic"   % kantanCsvV,
       "com.beachape"           %% "enumeratum"           % enumeratumV,
       "com.beachape"           %% "enumeratum-circe"     % enumeratumCirceV,
-      "ch.megard" %% "akka-http-cors" % akkaCorsV,
-),
+      "ch.megard"              %% "akka-http-cors"       % akkaCorsV
+    ),
     // add 'config' directory first in the classpath of the start script,
     // an alternative is to set the config file locations via CLI parameters
     // when starting the application
