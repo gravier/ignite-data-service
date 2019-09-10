@@ -4,11 +4,7 @@ import org.apache.ignite.cache.query.annotations.QuerySqlField
 import org.apache.ignite.cache.query.annotations.QuerySqlField.Group
 
 import scala.annotation.meta.field
-case class FindByLocation(state: Option[String] = None,
-                          propertyType: Option[String] = None,
-                          lat: Option[Double] = None,
-                          lon: Option[Double] = None,
-                          sorting: Option[List[Sorting]] = None)
+case class FindByLocation(state: Option[String] = None)
 
 case class Sorting(field: SortField, direction: SortDirection)
 
