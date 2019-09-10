@@ -35,7 +35,7 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
              minDate,
              "flat",
              "rio",
-             "rio",
+             "dejinero",
              56.2135,
              46.222,
              3000000,
@@ -55,7 +55,7 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
              minDate + 1,
              "house",
              "puerta",
-             "puerta",
+             "gallera",
              56.2135,
              46.222,
              300002200,
@@ -112,6 +112,22 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
     }
 
     Post(s"/property", FindByLocation(state = Some("rio1"))) ~> routes ~> check {
+      status shouldBe OK
+      contentType shouldBe `application/json`
+      val resp = responseAs[List[Property]]
+      resp.size shouldBe 0
+    }
+  }
+
+  it should "filter by place" in {
+    Post(s"/property", FindByLocation(place = Some("dejinero"))) ~> routes ~> check {
+      status shouldBe OK
+      contentType shouldBe `application/json`
+      val resp = responseAs[List[Property]]
+      resp shouldBe properties.filter(_.place == "dejinero")
+    }
+
+    Post(s"/property", FindByLocation(place = Some("dejinero1"))) ~> routes ~> check {
       status shouldBe OK
       contentType shouldBe `application/json`
       val resp = responseAs[List[Property]]
