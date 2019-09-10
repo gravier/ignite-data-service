@@ -92,46 +92,4 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
   implicit val sqlCtx: SqlMirrorContext[MirrorSqlDialect, Literal] = new SqlMirrorContext(MirrorSqlDialect, Literal)
   implicit val propertyRepository                                  = new PropertyRepository()
 
-  it should "return all results" in {
-    Post(s"/property", FindByLocation()) ~> routes ~> check {
-      status shouldBe OK
-      contentType shouldBe `application/json`
-      val resp = responseAs[List[Property]]
-      resp shouldBe properties
-    }
-  }
-
-  it should "filter by state" in {
-    Post(s"/property", FindByLocation(state = Some("rio"))) ~> routes ~> check {
-      status shouldBe OK
-      contentType shouldBe `application/json`
-      val resp = responseAs[List[Property]]
-      resp shouldBe properties.filter(_.state == "rio")
-    }
-
-    Post(s"/property", FindByLocation(state = Some("rio1"))) ~> routes ~> check {
-      status shouldBe OK
-      contentType shouldBe `application/json`
-      val resp = responseAs[List[Property]]
-      resp shouldBe List()
-    }
-  }
-
-  it should "sort by direction" in {
-    Post(s"/property", FindByLocation(sorting = Some(List(Sorting(SortField.createdOn, SortDirection.desc))))) ~> routes ~> check {
-      status shouldBe OK
-      contentType shouldBe `application/json`
-      val resp = responseAs[List[Property]]
-      resp.head.createdOn shouldBe properties.map(_.createdOn).max
-    }
-  }
-
-  it should "be possible to load data" in {
-    Await.result(
-      PropertyIgniteCacheLoader.loadPropertiesFromCsv(cache, "file:////home/evaldas/Downloads/property-br-sample.csv"),
-      10.seconds)
-//      "https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
-    Await.result(cache.get("6d2dffdf24a61af94f23e69f8c3ebef1b9ce58ea"), 1.seconds).isDefined shouldBe true
-  }
-
 }
