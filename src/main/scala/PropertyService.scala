@@ -72,6 +72,7 @@ object PropertyServiceApp extends App with PropertyService {
   )
 
   loadPropertiesFromCsv(cache, "https://storage.googleapis.com/stacktome-temp/property-br-sample.csv")
+//  "https://storage.googleapis.com/stacktome-temp/property-br.csv")
 //                        "file:////home/evaldas/Downloads/property-br-sample.csv")
 //    "file:////home/evaldas/Downloads/property-br.csv"  )
   override implicit val propertyRepository = new PropertyRepository()
