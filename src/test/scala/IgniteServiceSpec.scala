@@ -135,6 +135,23 @@ class IgniteServiceSpec extends FlatSpec with Matchers with ScalatestRouteTest w
     }
   }
 
+  it should "filter by property type" in {
+    Post(s"/property", FindByLocation(propertyTypes = Some(List("house")))) ~> routes ~> check {
+      status shouldBe OK
+      contentType shouldBe `application/json`
+      val resp = responseAs[List[Property]]
+      resp shouldBe properties.filter(_.propertyType == "house")
+    }
+
+    // todo increase akka timeout
+    Post(s"/property", FindByLocation(propertyTypes = Some(List("house", "flat")))) ~> routes ~> check {
+      status shouldBe OK
+      contentType shouldBe `application/json`
+      val resp = responseAs[List[Property]]
+      resp.size shouldBe 2
+    }
+  }
+
 // TODO  - BONUS 1 - implement paging (why usually api's don't return count)
 // TODO - BONUS 2 - implement filter by room count
 // TODO - BONUS 3 - implement filter by price
